@@ -1,144 +1,104 @@
-import { useState } from "react";
-import axios from "axios";
+import React, { useState, useEffect } from "react";
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+
+// --- Page Imports ---
+import AuthPage from './AuthPage';
+import AdminPage from './AdminPage';
+import NavBar from './NavBar';
+import Packages from './Packages';
+import PackageDetail from './PackageDetail';
+import Destinations from './Destinations';
+import DestinationDetail from './DestinationDetail';
+import AdminEnquiries from './AdminEnquiries';
+import HomeHero from './HomeHero';
+import AdminAi from './AdminAi';
+import ItinerariesPage from './ItinerariesPage';
+
+// ✅ NEW: Import the new AI Planner (instead of AiDemo)
+import AiTripPlanner from './AiTripPlanner'; 
+
+// ✅ NEW: Import Footer
+import Footer from './Footer'; 
+
+// --- Component Imports ---
+import PackageSection from './PackageSection';
+import WhyChooseUs from './WhyChooseUs';
+import Testimonials from './Testimonials';
+
+// --- Styles ---
+import "./index.css";
+import "./App.css"; 
 
 function App() {
-  const [destination, setDestination] = useState("");
-  const [days, setDays] = useState("");
-  const [budget, setBudget] = useState("");
-  const [itinerary, setItinerary] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [packages, setPackages] = useState([]);
+  
+  // Auth State
+  const [token, setToken] = useState(localStorage.getItem('tt_token') || '');
+  const [user, setUser] = useState(JSON.parse(localStorage.getItem('tt_user') || 'null'));
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setItinerary("");
-
-    // Temporary placeholder response — will connect AI later
+  const fetchPackages = async () => {
     try {
-      const response = await axios.get("http://localhost:5000/");
-      setItinerary(
-        `Trip planned to ${destination} for ${days} days within ₹${budget} budget.\n\n${response.data}`
-      );
+      const res = await fetch("/api/packages");
+      const data = await res.json();
+      setPackages(data.docs || []);
     } catch (error) {
-      setItinerary("❌ Could not connect to backend.");
+      console.error("❌ Error fetching packages:", error);
     }
-
-    setLoading(false);
   };
 
+  useEffect(() => {
+    fetchPackages();
+  }, []); 
+
   return (
-    <div
-      style={{
-        textAlign: "center",
-        marginTop: "40px",
-        fontFamily: "Segoe UI, sans-serif",
-        background: "#f8f9fa",
-        minHeight: "100vh",
-        padding: "40px",
-      }}
-    >
-      <h1 style={{ color: "#0077cc", marginBottom: "30px" }}>
-        🌍 TravelTech Trip Planner
-      </h1>
+    <BrowserRouter>
+      <div className="app-container">
+        {/* Navigation Bar */}
+        <NavBar user={user} />
 
-      <form
-        onSubmit={handleSubmit}
-        style={{
-          maxWidth: "500px",
-          margin: "auto",
-          background: "#fff",
-          padding: "25px",
-          borderRadius: "15px",
-          boxShadow: "0 4px 15px rgba(0,0,0,0.1)",
-        }}
-      >
-        <div style={{ marginBottom: "15px" }}>
-          <label>Destination:</label>
-          <input
-            type="text"
-            value={destination}
-            onChange={(e) => setDestination(e.target.value)}
-            placeholder="e.g. Goa, Paris"
-            required
-            style={{
-              width: "100%",
-              padding: "10px",
-              borderRadius: "8px",
-              border: "1px solid #ccc",
-              marginTop: "5px",
-            }}
+        <Routes>
+          {/* --- Home Page --- */}
+          <Route path="/" element={
+            <div className="home-page">
+              <HomeHero />
+              <PackageSection title="Trending Holiday Packages" packages={packages} />
+              <WhyChooseUs />
+              <Testimonials />
+            </div>
+          } />
+
+          {/* --- Public Pages --- */}
+          <Route path="/packages" element={<Packages />} />
+          <Route path="/packages/:id" element={<PackageDetail />} />
+          <Route path="/destinations" element={<Destinations />} />
+          <Route path="/destinations/:id" element={<DestinationDetail />} />
+          
+          {/* ✅ CORRECTED ROUTE: Use AiTripPlanner */}
+          <Route path="/ai" element={<AiTripPlanner />} />
+          
+          <Route path="/itineraries" element={<ItinerariesPage token={token} />} />
+          <Route path="/auth" element={<AuthPage onAuth={(t,u)=>{ setToken(t); setUser(u); }} />} />
+
+          {/* --- Admin Protected Routes --- */}
+          <Route 
+            path="/admin" 
+            element={user && user.role === 'admin' ? <AdminPage token={token} user={user} fetchPackages={fetchPackages} packages={packages} /> : <Navigate to="/auth" />} 
           />
-        </div>
-
-        <div style={{ marginBottom: "15px" }}>
-          <label>Number of Days:</label>
-          <input
-            type="number"
-            value={days}
-            onChange={(e) => setDays(e.target.value)}
-            placeholder="e.g. 5"
-            required
-            style={{
-              width: "100%",
-              padding: "10px",
-              borderRadius: "8px",
-              border: "1px solid #ccc",
-              marginTop: "5px",
-            }}
+          <Route 
+            path="/admin/enquiries" 
+            element={user && user.role === 'admin' ? <AdminEnquiries token={token} /> : <Navigate to="/auth" />} 
           />
-        </div>
-
-        <div style={{ marginBottom: "15px" }}>
-          <label>Budget (₹):</label>
-          <input
-            type="number"
-            value={budget}
-            onChange={(e) => setBudget(e.target.value)}
-            placeholder="e.g. 15000"
-            required
-            style={{
-              width: "100%",
-              padding: "10px",
-              borderRadius: "8px",
-              border: "1px solid #ccc",
-              marginTop: "5px",
-            }}
+          <Route 
+            path="/admin/ai" 
+            element={user && user.role === 'admin' ? <AdminAi token={token} /> : <Navigate to="/auth" />} 
           />
-        </div>
 
-        <button
-          type="submit"
-          style={{
-            backgroundColor: "#0077cc",
-            color: "white",
-            padding: "10px 20px",
-            border: "none",
-            borderRadius: "8px",
-            cursor: "pointer",
-            fontWeight: "bold",
-          }}
-        >
-          {loading ? "Planning..." : "Generate Itinerary"}
-        </button>
-      </form>
+        </Routes>
 
-      {itinerary && (
-        <div
-          style={{
-            background: "white",
-            maxWidth: "600px",
-            margin: "40px auto",
-            padding: "20px",
-            borderRadius: "12px",
-            boxShadow: "0 4px 10px rgba(0,0,0,0.1)",
-            whiteSpace: "pre-line",
-          }}
-        >
-          <h2 style={{ color: "#0077cc" }}>🧳 Your Trip Plan</h2>
-          <p>{itinerary}</p>
-        </div>
-      )}
-    </div>
+        {/* ✅ Footer at the bottom */}
+        <Footer />
+      </div>
+    </BrowserRouter>
   );
 }
 

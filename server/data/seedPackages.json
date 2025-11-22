@@ -1,0 +1,53 @@
+[
+  {
+    "title": "Munnar Tea Trail - 4 Days",
+    "slug": "munnar-tea-trail-4d",
+    "destinationSlug": "munnar",
+    "price": 12000,
+    "durationDays": 4,
+    "type": "family",
+    "images": ["https://images.unsplash.com/photo-1501785888041-af3ef285b470"],
+    "summary": "Explore Munnar\u2019s tea gardens, Eravikulam National Park and local cuisine.",
+    "itineraryOutline": [
+      { "day": 1, "title": "Arrival & Relax", "details": "Check-in and local sightseeing" },
+      { "day": 2, "title": "Tea Gardens", "details": "Visit tea estates and museum" },
+      { "day": 3, "title": "National Park", "details": "Eravikulam National Park tour" },
+      { "day": 4, "title": "Departure", "details": "Check-out" }
+    ],
+    "tags": ["tea", "nature"],
+    "featured": true
+  },
+  {
+    "title": "Alleppey Houseboat - 2 Days",
+    "slug": "alleppey-houseboat-2d",
+    "destinationSlug": "alleppey",
+    "price": 8000,
+    "durationDays": 2,
+    "type": "couple",
+    "images": ["https://images.unsplash.com/photo-1507525428034-b723cf961d3e"],
+    "summary": "Overnight houseboat experience in Alleppey backwaters.",
+    "itineraryOutline": [
+      { "day": 1, "title": "Board Houseboat", "details": "Cruise through canals" },
+      { "day": 2, "title": "Disembark", "details": "Return to shore" }
+    ],
+    "tags": ["backwaters", "houseboat"],
+    "featured": true
+  },
+  {
+    "title": "Goa Beach Escape - 3 Days",
+    "slug": "goa-beach-3d",
+    "destinationSlug": "goa",
+    "price": 15000,
+    "durationDays": 3,
+    "type": "solo",
+    "images": ["https://images.unsplash.com/photo-1493558103817-58b2924bce98"],
+    "summary": "Relax on Goa\u2019s beaches and enjoy local seafood.",
+    "itineraryOutline": [
+      { "day": 1, "title": "Arrival & Beach", "details": "Relax at the beach" },
+      { "day": 2, "title": "Water Sports", "details": "Optional activities" },
+      { "day": 3, "title": "Departure", "details": "Check-out" }
+    ],
+    "tags": ["beach", "relax"],
+    "featured": false
+  }
+]

@@ -1,0 +1,38 @@
+[
+  {
+    "name": "Munnar",
+    "slug": "munnar",
+    "country": "India",
+    "region": "Kerala",
+    "imageUrl": "https://images.unsplash.com/photo-1519681393784-d120267933ba",
+    "shortDescription": "Hill station famous for tea gardens and cool climate.",
+    "longDescription": "Munnar is a popular hill station in Kerala, known for its rolling tea estates, misty hills and pleasant climate.",
+    "activities": ["Tea Garden Tours", "Trekking", "Bird Watching"],
+    "tags": ["hill-station", "nature", "tea"],
+    "featured": true
+  },
+  {
+    "name": "Alleppey (Alappuzha)",
+    "slug": "alleppey",
+    "country": "India",
+    "region": "Kerala",
+    "imageUrl": "https://images.unsplash.com/photo-1507525428034-b723cf961d3e",
+    "shortDescription": "Backwaters and houseboat cruises.",
+    "longDescription": "Alleppey is famous for backwater houseboat cruises, serene canals and village life.",
+    "activities": ["Houseboat", "Village Walks"],
+    "tags": ["backwaters", "houseboat"],
+    "featured": true
+  },
+  {
+    "name": "Goa",
+    "slug": "goa",
+    "country": "India",
+    "region": "Goa",
+    "imageUrl": "https://images.unsplash.com/photo-1507525428034-b723cf961d3e",
+    "shortDescription": "Beaches and nightlife.",
+    "longDescription": "Goa is India\u2019s beach capital, known for its lively beaches, seafood and nightlife.",
+    "activities": ["Beach", "Water Sports", "Nightlife"],
+    "tags": ["beach", "party"],
+    "featured": false
+  }
+]
