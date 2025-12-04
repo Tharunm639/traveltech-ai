@@ -15,6 +15,8 @@ import adminRouter from "./routes/admin.js";
 import authRouter from "./routes/auth.js";
 import enquiriesRouter from "./routes/enquiries.js";
 import aiRouter from "./routes/ai.js";
+
+import newsletterRouter from "./routes/newsletter.js";
 import errorHandler from "./middleware/errorHandler.js";
 
 // ✅ Load environment variables
@@ -24,7 +26,10 @@ dotenv.config({ path: path.resolve(process.cwd(), ".env") });
 console.log("🔍 .env exists:", fs.existsSync(path.resolve(process.cwd(), ".env")));
 console.log("🔍 Mongo URI from .env:", process.env.MONGO_URI);
 
+
 const app = express();
+// Newsletter subscription endpoint (must be after app is defined)
+app.use("/api/newsletter", newsletterRouter);
 
 // ✅ FIX: Trust proxy to allow rate limiter to work correctly behind the React proxy
 app.set('trust proxy', 1);

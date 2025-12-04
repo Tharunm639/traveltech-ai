@@ -12,7 +12,6 @@ export default function PackageSection({ title, packages }) {
       <div className="cards-grid">
         {packages.map((pkg) => (
           <div key={pkg._id} className="travel-card">
-            
             {/* Image Area */}
             <div className="card-image-container">
               <img 
@@ -21,6 +20,14 @@ export default function PackageSection({ title, packages }) {
                 className="card-image"
               />
               <span className="card-badge">{pkg.durationDays} Days</span>
+              {/* Price Ribbon */}
+              <span className="card-price-ribbon">₹{pkg.price.toLocaleString()}</span>
+              {/* Best Seller/Popular Badge */}
+              {(pkg.isBestSeller || pkg.isPopular) && (
+                <span className="card-top-badge">
+                  {pkg.isBestSeller ? 'Best Seller' : 'Popular'}
+                </span>
+              )}
             </div>
 
             {/* Content Area */}
@@ -29,11 +36,9 @@ export default function PackageSection({ title, packages }) {
               <p className="card-destination">
                 📍 {pkg.destination?.name || pkg.type || 'Tour Package'}
               </p>
-              
               <p className="card-summary">
                 {pkg.summary ? pkg.summary.substring(0, 60) + '...' : ''}
               </p>
-
               <div className="card-footer">
                 <div className="price-box">
                   <span className="start-text">Starts from</span>

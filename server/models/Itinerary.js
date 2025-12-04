@@ -13,7 +13,9 @@ const itinerarySchema = new mongoose.Schema(
   {
     name: { type: String, required: true },
     userId: { type: String },
-    items: [itineraryItemSchema],
+    type: { type: String, enum: ['package', 'ai'], default: 'package' }, // 'package' or 'ai'
+    items: { type: [itineraryItemSchema], default: [] }, // For package-based itineraries
+    details: { type: Object }, // For AI-generated itineraries (stores the full JSON)
   },
   { timestamps: true }
 );

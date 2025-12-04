@@ -13,12 +13,14 @@ import AdminEnquiries from './AdminEnquiries';
 import HomeHero from './HomeHero';
 import AdminAi from './AdminAi';
 import ItinerariesPage from './ItinerariesPage';
+import ItineraryDetail from './ItineraryDetail';
+import Contact from './Contact'; // Import Contact page
 
 // ✅ NEW: Import the new AI Planner (instead of AiDemo)
-import AiTripPlanner from './AiTripPlanner'; 
+import AiTripPlanner from './AiTripPlanner';
 
 // ✅ NEW: Import Footer
-import Footer from './Footer'; 
+import Footer from './Footer';
 
 // --- Component Imports ---
 import PackageSection from './PackageSection';
@@ -27,11 +29,11 @@ import Testimonials from './Testimonials';
 
 // --- Styles ---
 import "./index.css";
-import "./App.css"; 
+import "./App.css";
 
 function App() {
   const [packages, setPackages] = useState([]);
-  
+
   // Auth State
   const [token, setToken] = useState(localStorage.getItem('tt_token') || '');
   const [user, setUser] = useState(JSON.parse(localStorage.getItem('tt_user') || 'null'));
@@ -48,7 +50,7 @@ function App() {
 
   useEffect(() => {
     fetchPackages();
-  }, []); 
+  }, []);
 
   return (
     <BrowserRouter>
@@ -72,25 +74,27 @@ function App() {
           <Route path="/packages/:id" element={<PackageDetail />} />
           <Route path="/destinations" element={<Destinations />} />
           <Route path="/destinations/:id" element={<DestinationDetail />} />
-          
+
           {/* ✅ CORRECTED ROUTE: Use AiTripPlanner */}
           <Route path="/ai" element={<AiTripPlanner />} />
-          
+
           <Route path="/itineraries" element={<ItinerariesPage token={token} />} />
-          <Route path="/auth" element={<AuthPage onAuth={(t,u)=>{ setToken(t); setUser(u); }} />} />
+          <Route path="/itineraries/:id" element={<ItineraryDetail />} />
+          <Route path="/contact" element={<Contact />} /> {/* New Route */}
+          <Route path="/auth" element={<AuthPage onAuth={(t, u) => { setToken(t); setUser(u); }} />} />
 
           {/* --- Admin Protected Routes --- */}
-          <Route 
-            path="/admin" 
-            element={user && user.role === 'admin' ? <AdminPage token={token} user={user} fetchPackages={fetchPackages} packages={packages} /> : <Navigate to="/auth" />} 
+          <Route
+            path="/admin"
+            element={user && user.role === 'admin' ? <AdminPage token={token} user={user} fetchPackages={fetchPackages} packages={packages} /> : <Navigate to="/auth" />}
           />
-          <Route 
-            path="/admin/enquiries" 
-            element={user && user.role === 'admin' ? <AdminEnquiries token={token} /> : <Navigate to="/auth" />} 
+          <Route
+            path="/admin/enquiries"
+            element={user && user.role === 'admin' ? <AdminEnquiries token={token} /> : <Navigate to="/auth" />}
           />
-          <Route 
-            path="/admin/ai" 
-            element={user && user.role === 'admin' ? <AdminAi token={token} /> : <Navigate to="/auth" />} 
+          <Route
+            path="/admin/ai"
+            element={user && user.role === 'admin' ? <AdminAi token={token} /> : <Navigate to="/auth" />}
           />
 
         </Routes>

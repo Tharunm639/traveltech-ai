@@ -1,78 +1,91 @@
 import express from 'express';
-import rateLimit from 'express-rate-limit';
-import fetch from 'node-fetch';
-import { body, validationResult } from 'express-validator';
-import AiUsage from '../models/AiUsage.js';
-import aiConfig from '../aiConfig.js';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
 const router = express.Router();
 
-// basic rate limiting to protect AI endpoint
-const limiter = rateLimit({ windowMs: 60_000, max: 30 });
-router.use(limiter);
+// Helper function to safely extract and parse JSON from the AI response
+function safeParse(text) {
+  console.log("📩 Raw Text Received (Start):", text.substring(0, 100));
 
-// POST /api/ai
-// body: { prompt: string, maxTokens?: number }
-router.post(
-  '/',
-  body('prompt').isString().notEmpty().isLength({ min: 1, max: 5000 }),
-  async (req, res) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
+  // 1. Remove markdown format (```json ... ```)
+  let cleanedText = text.replace(/```json/g, '').replace(/```/g, '').trim();
 
-    const { prompt, maxTokens } = req.body;
-    const provider = process.env.AI_PROVIDER || 'anthropic';
-    const model = aiConfig.overrideModel || process.env.AI_MODEL || 'claude-haiku-4.5';
+  // 2. Isolate the JSON object ({...})
+  const jsonStartIndex = cleanedText.indexOf('{');
+  const jsonEndIndex = cleanedText.lastIndexOf('}');
 
-    if (provider === 'anthropic') {
-      const apiKey = process.env.ANTHROPIC_API_KEY;
-      if (!apiKey) return res.status(500).json({ error: 'Server missing ANTHROPIC_API_KEY' });
+  if (jsonStartIndex !== -1 && jsonEndIndex !== -1 && jsonEndIndex > jsonStartIndex) {
+    cleanedText = cleanedText.substring(jsonStartIndex, jsonEndIndex + 1);
+  } else {
+    console.error("⚠️ Failed to find proper JSON delimiters { } in AI response.");
+  }
 
-      try {
-        // Use Anthropic completion endpoint. Field names may vary by API version; adapt if needed.
-        const body = {
-          model,
-          prompt,
-          max_tokens: maxTokens || 300,
-          temperature: 0.7
-        };
+  return JSON.parse(cleanedText);
+}
 
-        const r = await fetch('https://api.anthropic.com/v1/complete', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-API-Key': apiKey,
-            'Authorization': `Bearer ${apiKey}`,
-            'Accept': 'application/json'
-          },
-          body: JSON.stringify(body)
-        });
 
-        if (!r.ok) {
-          const text = await r.text();
-          console.error('Anthropic error', r.status, text);
-          return res.status(502).json({ error: 'AI provider error', details: text });
-        }
+router.post('/generate', async (req, res) => {
+  try {
+    console.log("🤖 AI Request Received.");
 
-        const j = await r.json();
-        // Determine text in common fields
-        const responseText = j.completion || j.output || (j?.choices && j.choices[0]?.text) || j?.text || null;
+    // --- CONFIGURATION ---
+    const API_KEY = process.env.GEMINI_API_KEY;
+    const MODEL_NAME = "gemini-pro";
+    // ---------------------
 
-        // Log usage asynchronously (do not block response on DB write)
-        try {
-          const usage = new AiUsage({ promptLength: prompt.length, model, provider, ip: req.ip || req.headers['x-forwarded-for'] || '', responseSize: responseText ? responseText.length : 0 });
-          usage.save().catch(e => console.error('Failed to save AI usage', e));
-        } catch (e) { console.error('AiUsage error', e); }
-
-        return res.json({ provider: 'anthropic', model, raw: j, text: responseText });
-      } catch (err) {
-        console.error('AI request failed', err);
-        return res.status(502).json({ error: 'AI request failed' });
-      }
+    if (!API_KEY) {
+      throw new Error("API_KEY_INVALID: Missing GEMINI_API_KEY in environment variables.");
     }
 
-    return res.status(400).json({ error: 'Unsupported AI provider' });
+    const genAI = new GoogleGenerativeAI(API_KEY);
+    const model = genAI.getGenerativeModel({ model: MODEL_NAME });
+
+    const { destination, days, budget, vibe } = req.body;
+
+    console.log(`📍 Planning trip to ${destination} using ${MODEL_NAME}...`);
+
+    const prompt = `
+      Act as a professional travel agent. Plan a ${days}-day trip to ${destination}.
+      Budget: ${budget}.
+      Vibe: ${vibe}.
+      
+      STRICTLY return a JSON object ONLY. Do NOT include any introductory text, markdown (like \`\`\`json), or commentary.
+      
+      The JSON must follow this exact structure:
+      {
+        "hotels": [
+           { "name": "Hotel Name", "price": "Est. Price", "description": "Short description" }
+        ],
+        "itinerary": [
+           { "day": 1, "morning": "Activity", "afternoon": "Activity", "evening": "Activity" },
+           { "day": 2, "morning": "Activity", "afternoon": "Activity", "evening": "Activity" }
+        ]
+      }
+    `;
+
+    // FIX: Removed requestOptions to simplify the call structure
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    let text = response.text();
+
+    // Use the safe parsing helper
+    const data = safeParse(text);
+
+    console.log("✅ AI Success! Sending data.");
+    res.json(data);
+
+  } catch (error) {
+    console.error("❌ AI FAILED during generation or parsing:", error);
+
+    let errorMessage = "Failed to generate itinerary due to internal server error.";
+    if (error.message && error.message.includes('API_KEY_INVALID')) {
+      errorMessage = "Configuration Error: The API Key is invalid or expired.";
+    } else if (error.message && error.message.includes('JSON')) {
+      errorMessage = "AI Parsing Error: Try a simpler request (e.g., Paris).";
+    }
+
+    res.status(500).json({ error: errorMessage });
   }
-);
+});
 
 export default router;

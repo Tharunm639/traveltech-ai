@@ -1,33 +1,34 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
+import PackageSection from './PackageSection';
+
+function useQuery() {
+  const { search } = useLocation();
+  return React.useMemo(() => new URLSearchParams(search), [search]);
+}
 
 export default function Packages() {
   const [packages, setPackages] = useState([]);
+  const query = useQuery();
+  const searchTerm = query.get('q') || '';
 
   useEffect(() => {
     (async () => {
       try {
-        const res = await fetch('/api/packages');
+        const url = searchTerm ? `/api/packages?q=${encodeURIComponent(searchTerm)}` : '/api/packages';
+        const res = await fetch(url);
         const data = await res.json();
         setPackages(data.docs || []);
       } catch (e) { console.error(e); }
     })();
-  }, []);
+  }, [searchTerm]);
 
   return (
-    <div style={{padding:20}}>
-      <h2>Packages</h2>
-      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(240px,1fr))',gap:12}}>
-        {packages.map(p => (
-          <div key={p._id} style={{border:'1px solid #ddd',padding:12,borderRadius:6}}>
-            <img src={p.images?.[0]} alt={p.title} style={{width:'100%',height:120,objectFit:'cover'}} />
-            <h3>{p.title}</h3>
-            <p>{p.summary}</p>
-            <p><strong>₹{p.price}</strong> • {p.durationDays}d • {p.type}</p>
-            <Link to={`/packages/${p._id}`}>View details</Link>
-          </div>
-        ))}
-      </div>
+    <div>
+      <PackageSection
+        title={searchTerm ? `Search Results for "${searchTerm}"` : "All Holiday Packages"}
+        packages={packages}
+      />
     </div>
   );
 }

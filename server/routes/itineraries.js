@@ -24,24 +24,44 @@ router.get("/", authenticate, async (req, res) => {
 });
 
 // POST /api/itineraries
-// Body: { name, items: [{ packageId, startDate?, notes? }] }
+// Body: { name, type, items: [{ packageId, startDate?, notes? }], details? }
 router.post("/", authenticate, async (req, res) => {
   try {
-    const { name, items } = req.body;
-    if (!name || !Array.isArray(items) || items.length === 0) {
-      return res.status(400).json({ error: "Invalid payload: name and items[] are required" });
+    const { name, type = 'package', items, details } = req.body;
+
+    if (!name) {
+      return res.status(400).json({ error: "Name is required" });
     }
 
-    // Validate package IDs exist
-    const packageIds = items.map(i => i.packageId);
-    const found = await Package.find({ _id: { $in: packageIds } }).select("_id");
-    if (found.length !== packageIds.length) {
-      return res.status(400).json({ error: "One or more packageIds are invalid" });
+    let mappedItems = [];
+
+    if (type === 'package') {
+      if (!Array.isArray(items) || items.length === 0) {
+        return res.status(400).json({ error: "Items are required for package itineraries" });
+      }
+      // Validate package IDs exist
+      const packageIds = items.map(i => i.packageId);
+      const found = await Package.find({ _id: { $in: packageIds } }).select("_id");
+      if (found.length !== packageIds.length) {
+        return res.status(400).json({ error: "One or more packageIds are invalid" });
+      }
+      mappedItems = items.map(i => ({ package: i.packageId, startDate: i.startDate, notes: i.notes }));
+    } else if (type === 'ai') {
+      if (!details) {
+        return res.status(400).json({ error: "Details are required for AI itineraries" });
+      }
+    } else {
+      return res.status(400).json({ error: "Invalid itinerary type" });
     }
 
-    const mappedItems = items.map(i => ({ package: i.packageId, startDate: i.startDate, notes: i.notes }));
+    const it = new Itinerary({
+      name,
+      userId: req.user.id,
+      type,
+      items: mappedItems,
+      details: type === 'ai' ? details : undefined
+    });
 
-    const it = new Itinerary({ name, userId: req.user.id, items: mappedItems });
     await it.save();
 
     res.status(201).json(it);
